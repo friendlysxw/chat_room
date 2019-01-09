@@ -39,10 +39,14 @@ if(isset($_POST['username'])){
         try{
             $pdo = new PDO('mysql:host=localhost;dbname=chat_room','root','');
             $pdo->exec("set names utf8");
-            $sql = "select * from user where username='{$username}' and password='{$password}'";
-            $stmt = $pdo->query($sql);
-            if($stmt->rowCount()>0){
-                $user=$stmt->fetch(PDO::FETCH_ASSOC);
+
+            $sql = "select * from user where username=? and password=?";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                $username,$password
+            ]);
+            $user=$stmt->fetch(PDO::FETCH_ASSOC);
+            if($user){
                 $key="abcd";
                 $token = array(
                     'user_id'=>$user['id'],
@@ -50,7 +54,7 @@ if(isset($_POST['username'])){
                 );
                 $jwt=JWT::encode($token,$key);
                 if(isset($_POST['agree'])){
-                    setcookie("jwt_token", $jwt,time()+3600);
+                    setcookie("jwt_token", $jwt,time()+3600*24*7);
                 }else{
                     setcookie("jwt_token", $jwt); 
                 }

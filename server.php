@@ -1,5 +1,5 @@
 <?php
-require_once "../Workerman-master/Autoloader.php";
+require_once "./Workerman-master/Autoloader.php";
 require('./vendor/autoload.php');
 use Firebase\JWT\JWT;
 use Workerman\Worker;
@@ -43,8 +43,8 @@ try{
 
 //保存所有在线用户       
 $users=[
-    'user_name'=>[],    //保存在线用户的用户名 下标为用户id
-    'connection'=>[]    //保存在线用户所在的客户端对象 下标为用户id
+    'user_name'=>[],    //保存在线用户的用户名 下标为用户id,值为用户名
+    'connection'=>[]    //保存在线用户所在的客户端对象 下标为用户id,值为用户客户端对象
 ];
 
 
@@ -104,19 +104,20 @@ $worker->onMessage=function($connection,$data){
     switch($info->chat_type){
         case 'join_all':
         //用户进入大厅时
-            //取出大厅的聊天记录
-            try{
-                $sql = "select * from messages where chat_type='all'";
-                $stmt = $pdo->query($sql);
-                $all_msg=$stmt->fetchAll(PDO::FETCH_ASSOC);
-            }catch(PDOException $e){
-                echo "数据库操作失败!".$e->getMessage();
+            //先退出之前进入的房间
+            if(isset($connection->room_id)){
+                unset($rooms[$connection->room_id]['room_users'][$connection->user_id]);
+                unset($connection->room_id);
+            } 
+            //推送信息,更新前台显示状态
+            foreach($users['connection'] as $c){
+                $arr=[
+                        'type'=>"join_all",
+                        'rooms'=>$rooms,
+                        'user_name'=>$connection->user_name
+                    ];
+                $c->send(json_encode($arr));
             }
-            $arr=[
-                'type'=>"join_all",
-                'all_msg'=>$all_msg
-            ];
-            $connection->send(json_encode($arr));
             break;
         case 'all':
         //当用户在大厅发消息时
@@ -125,8 +126,11 @@ $worker->onMessage=function($connection,$data){
                 $sql = "insert into messages 
                         (content,chat_type,user_id,user_name)
                          values 
-                        ('{$info->content}','all',{$connection->user_id},'{$connection->user_name}')";
-                $stmt = $pdo->exec($sql);
+                        (?,'all',{$connection->user_id},'{$connection->user_name}')";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute([
+                    $info->content
+                ]);
                 // echo $sql;
             }catch(PDOException $e){
                 echo "数据库操作失败!".$e->getMessage();
@@ -177,8 +181,11 @@ $worker->onMessage=function($connection,$data){
                 $sql = "insert into messages 
                         (content,chat_type,room_id,room_name,user_id,user_name)
                          values 
-                        ('{$info->content}','room',{$info->room_id},'{$info->room_name}',{$connection->user_id},'{$connection->user_name}')";
-                $stmt = $pdo->exec($sql);
+                        (?,'room',{$info->room_id},'{$info->room_name}',{$connection->user_id},'{$connection->user_name}')";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute([
+                    $info->content
+                ]);
                 // echo $sql;
             }catch(PDOException $e){
                 echo "数据库操作失败!".$e->getMessage();
@@ -197,6 +204,11 @@ $worker->onMessage=function($connection,$data){
 
         case 'join_one':
         //用户进入私聊模式时
+            //先退出之前进入的房间
+            if(isset($connection->room_id)){
+                unset($rooms[$connection->room_id]['room_users'][$connection->user_id]);
+                unset($connection->room_id);
+            }
             //取出该私聊的聊天记录
             try{
                 $sql = "select * from messages where (one_id={$info->one_id} and user_id={$connection->user_id}) or (one_id={$connection->user_id} and user_id={$info->one_id})";
@@ -220,8 +232,11 @@ $worker->onMessage=function($connection,$data){
                 $sql = "insert into messages 
                         (content,chat_type,one_id,one_name,user_id,user_name)
                          values 
-                        ('{$info->content}','one',{$info->one_id},'{$info->one_name}',{$connection->user_id},'{$connection->user_name}')";
-                $stmt = $pdo->exec($sql);
+                        (?,'one',{$info->one_id},'{$info->one_name}',{$connection->user_id},'{$connection->user_name}')";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute([
+                    $info->content
+                ]);
                 // echo $sql;
             }catch(PDOException $e){
                 echo "数据库操作失败!".$e->getMessage();

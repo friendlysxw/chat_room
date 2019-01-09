@@ -30,7 +30,7 @@
 </head>
 <?php 
 if(isset($_POST['username'])){
-    if($_POST['username']!='' && $_POST['password']!=''&&$_POST['phone']!=''){
+    if($_POST['username']!='' && $_POST['password']!=''){
         $username=$_POST['username'];
         $password=$_POST['password'];
         $phone=$_POST['phone'];
@@ -38,15 +38,22 @@ if(isset($_POST['username'])){
             $pdo = new PDO('mysql:host=localhost;dbname=chat_room','root','');
             $pdo->exec("set names utf8");
 
-            $sql = "select * from user where username='{$username}'";
-            $stmt = $pdo->query($sql);
-            if($stmt->rowCount()>0){
+            $sql = "select * from user where username=?";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                $username
+            ]);
+            $user=$stmt->fetch(PDO::FETCH_ASSOC);
+            if($user){
                 echo "<script>alert('用户名已存在，请重新注册');location.href='./regist.php';</script>";
                 exit();
             }
-            $sql = "insert into user values(null,'{$username}','{$password}','{$phone}')";
-            $num = $pdo->exec($sql);
-            if($num!=false){
+            $sql = "insert into user values(null,?,?,?)";
+            $stmt = $pdo->prepare($sql);
+            $data=$stmt->execute([
+                $username,$password,$phone
+            ]);
+            if($data){
                 echo "<script>alert('注册成功');location.href='./login.php';</script>";
             }else {
                 echo "<script>alert('注册失败')</script>";
@@ -57,7 +64,7 @@ if(isset($_POST['username'])){
             exit();
         }
     }else{
-        echo "<script>alert('用户名，密码，手机号不能为空')</script>";
+        echo "<script>alert('用户名，密码不能为空')</script>";
     }
         
 }
@@ -72,7 +79,7 @@ if(isset($_POST['username'])){
             <br>
             密 &nbsp; 码：<input type="password" name="password" id="">
             <br>
-            手机号：<input type="text" name="phone">
+            手机号：<input type="text" name="phone" value=" "> <span style="color:#999;">选填</span>
             <br>
             <input type="submit" value="注  册">
             <br>

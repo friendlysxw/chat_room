@@ -37,7 +37,7 @@ if(isset($_POST['username'])){
         $username=$_POST['username'];
         $password=$_POST['password'];
         try{
-            $pdo = new PDO('mysql:host=localhost;dbname=chat_room','root','');
+            $pdo = new PDO('mysql:host=localhost;dbname=chat_room','root','sxw123');
             $pdo->exec("set names utf8");
 
             $sql = "select * from user where username=? and password=?";

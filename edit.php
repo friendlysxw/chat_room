@@ -31,7 +31,7 @@
 <?php 
 if(isset($_GET['id'])){
     try{
-        $pdo = new PDO('mysql:host=localhost;dbname=chat_room','root','');
+        $pdo = new PDO('mysql:host=localhost;dbname=chat_room','root','sxw123');
         $pdo->exec("set names utf8");
         $sql = "select * from user where id={$_GET['id']}";
         $stmt = $pdo->query($sql);

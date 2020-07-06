@@ -9,7 +9,7 @@ $worker->count=1;   //设置进程数
 
 //连接数据库
 try{
-    $pdo = new PDO('mysql:host=localhost;dbname=chat_room','root','');
+    $pdo = new PDO('mysql:host=localhost;dbname=chat_room','root','sxw123');
     $pdo->exec("set names utf8");
     echo '数据库连接成功';
 }catch(PDOException $e){

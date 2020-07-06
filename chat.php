@@ -473,7 +473,7 @@
             onopen:function(){
                 //进入聊天室时触发
                 
-                alert('o(*￣3￣)o  欢迎来到《你的明天更美好》聊天室 o(￣ε￣*)o ');
+                alert('  欢迎来到《金光吐槽》聊天室 ');
             },
             onmessage:function(e){
                 //客户端接收服务器端推送是触发
